@@ -5,6 +5,7 @@ import { useFavicon } from '@vueuse/core';
 
 import LogoIcon from './logo-icon.svg';
 import LogoText from './logo-text.svg';
+import LogoIconPng from './logo-icon.png';
 
 const props = defineProps<
 	(
@@ -57,8 +58,10 @@ onMounted(() => {
 
 <template>
 	<div :class="containerClasses" data-test-id="n8n-logo">
-		<LogoIcon ref="logo" :class="$style.logo" />
-		<LogoText v-if="showLogoText" :class="$style.logoText" />
+		<!-- <LogoIcon ref="logo" :class="$style.logo" /> -->
+		<img ref="logo" :src="LogoIconPng" :class="$style.logo" />
+		<!-- <LogoText v-if="showLogoText" :class="$style.logoText" /> -->
+		<div :class="$style.logoText">Model Station</div>
 		<slot />
 	</div>
 </template>
@@ -82,9 +85,15 @@ onMounted(() => {
 	margin-bottom: var(--spacing-xl);
 }
 
-.logo,
+.logo {
+	width: 20px;
+	height: 20px;
+}
 .logoText {
-	transform: scale(1.3) translateY(-2px);
+	// width: 40px;
+	// height: 40px;
+	font-size: 12px;
+	// transform: scale(1.3) translateY(-2px);
 }
 
 .logoText {
