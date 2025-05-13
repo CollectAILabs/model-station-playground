@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAccount, useEnsName } from '@wagmi/vue';
 
 import { useToast } from '@/composables/useToast';
 import { useI18n } from '@/composables/useI18n';
@@ -13,7 +14,6 @@ import type { IFormBoxConfig } from '@/Interface';
 import { VIEWS } from '@/constants';
 
 import AuthView from '@/views/AuthView.vue';
-
 const settingsStore = useSettingsStore();
 const uiStore = useUIStore();
 const usersStore = useUsersStore();
@@ -21,7 +21,8 @@ const usersStore = useUsersStore();
 const toast = useToast();
 const locale = useI18n();
 const router = useRouter();
-
+const { address } = useAccount();
+const { data, error, status } = useEnsName({ address });
 const loading = ref(false);
 const formConfig: IFormBoxConfig = reactive({
 	title: locale.baseText('auth.setup.setupOwner'),
@@ -82,6 +83,7 @@ const formConfig: IFormBoxConfig = reactive({
 
 const onSubmit = async (values: { [key: string]: string | boolean }) => {
 	try {
+		console.log('onSubmit', values);
 		const forceRedirectedHere = settingsStore.showSetupPage;
 		loading.value = true;
 		await usersStore.createOwner(

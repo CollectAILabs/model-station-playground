@@ -25,10 +25,17 @@ import { createPinia, PiniaVuePlugin } from 'pinia';
 import { ChartJSPlugin } from '@/plugins/chartjs';
 import { SentryPlugin } from '@/plugins/sentry';
 
+import { WagmiPlugin } from '@wagmi/vue';
+import { config } from './config';
+import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query';
+const queryClient = new QueryClient();
+
 const pinia = createPinia();
 
 const app = createApp(App);
 
+app.use(WagmiPlugin, { config });
+app.use(VueQueryPlugin, { queryClient });
 app.use(SentryPlugin);
 app.use(TelemetryPlugin);
 app.use(PiniaVuePlugin);

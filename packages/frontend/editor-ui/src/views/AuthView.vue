@@ -4,7 +4,7 @@ import SSOLogin from '@/components/SSOLogin.vue';
 import type { IFormBoxConfig } from '@/Interface';
 import { useSettingsStore } from '@/stores/settings.store';
 import type { EmailOrLdapLoginIdAndPassword } from './SigninView.vue';
-
+import { useAccount, useConnect, useDisconnect, useSignMessage } from '@wagmi/vue';
 withDefaults(
 	defineProps<{
 		form: IFormBoxConfig;
@@ -17,7 +17,9 @@ withDefaults(
 		withSso: false,
 	},
 );
-
+const { address } = useAccount();
+const { connectors, connect } = useConnect();
+const { disconnect } = useDisconnect();
 const emit = defineEmits<{
 	update: [{ name: string; value: string }];
 	submit: [values: EmailOrLdapLoginIdAndPassword];
@@ -39,11 +41,31 @@ const onSecondaryClick = () => {
 const {
 	settings: { releaseChannel },
 } = useSettingsStore();
+
+const { signMessage, signMessageAsync } = useSignMessage();
+
+const handleLogin = async () => {
+	const message = `I am signing my message with my ${address.value} account`;
+	const signature = await signMessageAsync({ message });
+	onSubmit({ emailOrLdapLoginId: address.value || '', password: signature });
+	// connect({ connector: connectors[0] });
+};
 </script>
 
 <template>
 	<div :class="$style.container">
 		<Logo location="authView" :release-channel="releaseChannel" />
+		<div v-if="!address" :class="$style.walletContainer">
+			<button v-for="connector in connectors" :key="connector.id" @click="connect({ connector })">
+				Connect with {{ connector.name }}
+			</button>
+		</div>
+		<button :class="$style.loginButton" v-if="address" @click="handleLogin">
+			Login With Wallet: {{ address }}
+		</button>
+		<div>
+			<button :class="$style.loginButton" @click="() => disconnect()">Disconnect</button>
+		</div>
 		<div v-if="subtitle" :class="$style.textContainer">
 			<n8n-text size="large">{{ subtitle }}</n8n-text>
 		</div>
@@ -84,6 +106,18 @@ body {
 
 .formContainer {
 	padding-bottom: var(--spacing-xl);
+}
+.walletContainer {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-2xs);
+}
+.loginButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 </style>
 
