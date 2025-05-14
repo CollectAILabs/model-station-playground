@@ -1,5 +1,6 @@
+import type { AuthenticationMethod } from '@n8n/api-types';
 import { LoginRequestDto, ResolveSignupTokenQueryDto } from '@n8n/api-types';
-import type { User, PublicUser } from '@n8n/db';
+import type { User, PublicUser, AuthProviderType } from '@n8n/db';
 import { Body, Get, Post, Query, RestController } from '@n8n/decorators';
 import { isEmail } from 'class-validator';
 import { Response } from 'express';
@@ -7,6 +8,7 @@ import { Logger } from 'n8n-core';
 
 import { handleEmailLogin, handleLdapLogin } from '@/auth';
 import { AuthService } from '@/auth/auth.service';
+import { handleWalletLogin } from '@/auth/methods/wallet';
 import { RESPONSE_ERROR_MESSAGES } from '@/constants';
 import { UserRepository } from '@/databases/repositories/user.repository';
 import { AuthError } from '@/errors/response-errors/auth.error';
@@ -49,7 +51,7 @@ export class AuthController {
 		let user: User | undefined;
 
 		let usedAuthenticationMethod = getCurrentAuthenticationMethod();
-
+		usedAuthenticationMethod = 'wallet' as AuthProviderType;
 		if (usedAuthenticationMethod === 'email' && !isEmail(emailOrLdapLoginId)) {
 			throw new BadRequestError('Invalid email address');
 		}
@@ -75,6 +77,8 @@ export class AuthController {
 			} else {
 				user = await handleLdapLogin(emailOrLdapLoginId, password);
 			}
+		} else if (usedAuthenticationMethod === ('wallet' as AuthProviderType)) {
+			user = await handleWalletLogin(emailOrLdapLoginId, password, emailOrLdapLoginId);
 		} else {
 			user = await handleEmailLogin(emailOrLdapLoginId, password);
 		}
@@ -99,7 +103,7 @@ export class AuthController {
 
 			this.eventService.emit('user-logged-in', {
 				user,
-				authenticationMethod: usedAuthenticationMethod,
+				authenticationMethod: usedAuthenticationMethod as AuthenticationMethod,
 			});
 
 			return await this.userService.toPublic(user, { posthog: this.postHog, withScopes: true });
